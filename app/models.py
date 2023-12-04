@@ -2,6 +2,7 @@ import databases
 import ormar
 import sqlalchemy
 import datetime
+from pydantic import BaseModel
 
 from .config import settings
 
@@ -24,6 +25,13 @@ class Operation(ormar.Model):
     timestamp: datetime.datetime = ormar.DateTime(
         pydantic_only=True, default=datetime.datetime.now
     )
+
+class Calc(BaseModel):
+    operation_list: list
+
+class CalcResult(BaseModel):
+    operation: str = None
+    result: float = 0.0
 
 
 engine = sqlalchemy.create_engine(settings.db_url)
