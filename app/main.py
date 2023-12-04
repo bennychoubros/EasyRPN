@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, HTTPException
 from fastapi.responses import FileResponse
 
 from app.models import database, Operation, Calc, CalcResult
@@ -21,8 +21,6 @@ async def root():
 async def startup():
     if not database.is_connected:
         await database.connect()
-    # create a first test entry
-    await Operation.objects.get_or_create(expression="1 2 +", result=3.0)
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -52,7 +50,13 @@ async def calculate_operation(operation: Calc) -> CalcResult:
     result: float
     expression: str
     #Resolve operation
-    result = compute(operation.operation_list)
+    try:
+        result = compute(operation.operation_list)
+    except(Exception) as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
     #Save in DB if successful
     expression = " ".join(str(i) for i in operation.operation_list)
     await Operation.objects.create(expression=expression, result=result)
